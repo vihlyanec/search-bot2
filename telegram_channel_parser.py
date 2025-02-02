@@ -37,7 +37,7 @@ async def search_user(message: types.Message):
     if channel_id:
         chat_link = f"tg://user?id={user_id}"
         await message.answer(
-            f"✅ Пользователь найден в <a href='tg://user?id={channel_id}'>закрытом канале</a>.\n"
+            f"✅ Пользователь найден в <a href='tg://channel?id={channel_id}'>закрытом канале</a>.\n"
             f"🔗 <a href='{chat_link}'>Открыть диалог</a>",
             parse_mode="HTML"
         )
