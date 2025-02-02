@@ -11,39 +11,38 @@ dp = Dispatcher()
 
 async def get_bot_channels():
     bot_info = await bot.get_me()
-    rights = await bot.get_my_default_administrator_rights()
-    
-    if rights.can_manage_chat:
-        updates = await bot.get_updates()
-        channels = set()
-        
-        for update in updates:
+    channels = set()
+    try:
+        dialogs = await bot.get_updates()
+        for update in dialogs:
             if update.my_chat_member:
                 chat = update.my_chat_member.chat
                 if chat.type == "channel":
-                    channels.add(chat.id)
-        
-        return list(channels)
-    else:
-        return []
-
-async def get_bot_channels():
-    bot_info = await bot.get_me()
-    updates = await bot.get_updates()
-    channels = set()
-
-    async for dialog in bot.get_dialogs():
-        if dialog.chat.type == "channel":
-            try:
-                admins = await bot.get_chat_administrators(dialog.chat.id)
-                for admin in admins:
-                    if admin.user.id == bot_info.id:
-                        channels.add(dialog.chat.id)
-            except Exception:
-                continue
-
+                    admins = await bot.get_chat_administrators(chat.id)
+                    for admin in admins:
+                        if admin.user.id == bot_info.id:
+                            channels.add(chat.id)
+    except Exception as e:
+        print(f"Ошибка при получении каналов: {e}")
     return list(channels)
-    
+
+async def check_user_in_channels(user_id, channels):
+    for channel_id in channels:
+        try:
+            chat_member = await bot.get_chat_member(channel_id, user_id)
+            if chat_member.status in ["member", "administrator", "creator"]:
+                user = chat_member.user
+                return {
+                    "channel_id": channel_id,
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                }
+        except Exception:
+            continue
+    return None
+
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer("👋 Отправь Telegram ID, и я проверю, подписан ли пользователь на каналы, в которых я админ.")
