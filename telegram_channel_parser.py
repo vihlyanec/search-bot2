@@ -27,23 +27,23 @@ async def get_bot_channels():
     else:
         return []
 
-async def check_user_in_channels(user_id, channels):
-    for channel_id in channels:
-        try:
-            chat_member = await bot.get_chat_member(channel_id, user_id)
-            if chat_member.status in ["member", "administrator", "creator"]:
-                user = chat_member.user
-                return {
-                    "channel_id": channel_id,
-                    "id": user.id,
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                }
-        except Exception:
-            continue
-    return None
+async def get_bot_channels():
+    bot_info = await bot.get_me()
+    updates = await bot.get_updates()
+    channels = set()
 
+    async for dialog in bot.get_dialogs():
+        if dialog.chat.type == "channel":
+            try:
+                admins = await bot.get_chat_administrators(dialog.chat.id)
+                for admin in admins:
+                    if admin.user.id == bot_info.id:
+                        channels.add(dialog.chat.id)
+            except Exception:
+                continue
+
+    return list(channels)
+    
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer("👋 Отправь Telegram ID, и я проверю, подписан ли пользователь на каналы, в которых я админ.")
